@@ -169,3 +169,6 @@ __pycache__
 
 # IOLogger logs
 *_log.csv
+
+# Custom BUILD DIR for higherSentinel
+biqu-bin

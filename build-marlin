@@ -1,0 +1,59 @@
+# pio abs path
+PIO_VENV_PATH="/home/anjay/.platformio/penv/bin/activate"
+CUSTOM_BUILD_DIR="$(pwd)/biqu-bin"
+BUILD_EPOCH=$(date +%s)
+
+# Activate the p-venv where pio is installed
+echo "Activating pyhton venv @ $PIO_VENV_PATH"
+. $PIO_VENV_PATH
+echo "Python3 active @ $(which python3)"
+
+# Check if PIO is installed
+echo "Checking PlatformIO installation"
+if ! command -v pio &> /dev/null; then
+    echo "PlatformIO not found. Please install it from: https://docs.platformio.org/en/latest/core/installation/index.html"
+    deactivate
+    return 1
+fi
+
+# Check if the pio.ini is present
+if ! [ -f "platformio.ini" ]; then
+    echo "PlatformIO config not found."
+    deactivate
+    return 1
+fi 
+
+# Build marlin
+echo "Building Marlin $(git tag --points-at HEAD)"
+
+
+
+# Clean run. Takes longer to finish
+pio run --target clean
+pio run
+
+# Spit out the bin file path if everything went well
+if [ $? -eq 0 ]; then
+
+    # Message for the user
+    echo "Build success. Binary : $(pwd)/.pio/build/LPC1768/firmware.bin"
+    
+    # Clean the custom BD
+    if [ -d $CUSTOM_BUILD_DIR ]; then
+        rm -rf $CUSTOM_BUILD_DIR
+    fi
+
+    # Make the new timestamped BD and copy the bin
+    echo "Copying firware to $CUSTOM_BUILD_DIR/BUILD_$BUILD_EPOCH"
+
+    # Make the custom BD if necessary
+    mkdir -p "$CUSTOM_BUILD_DIR/BUILD_$BUILD_EPOCH"
+    cp "$(pwd)/.pio/build/LPC1768/firmware.bin" "$CUSTOM_BUILD_DIR/BUILD_$BUILD_EPOCH"
+
+else
+    echo "Build failed!"
+fi
+
+# Close p-venv
+deactivate
+return 0
